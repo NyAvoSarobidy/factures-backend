@@ -9,6 +9,8 @@ import logging
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
+logger = logging.getLogger(__name__)
+
 from app.services.pdf_extractor import extract_term_sheet
 
 logger = logging.getLogger(__name__)

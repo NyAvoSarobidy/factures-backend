@@ -17,6 +17,11 @@ router = APIRouter(
 )
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 @router.post(
     "/calculate",
     response_model=DealPublic,
@@ -34,7 +39,10 @@ async def calculate_commission(deal: DealInput) -> DealPublic:
         result = calculate_commission_response(deal)
         return result.public
     except Exception as e:
+        # Ne JAMAIS renvoyer le message d'erreur brut au client — risque de fuite
+        # de données confidentielles (total_fees, calculation_detail)
+        logger.error("Erreur de calcul: %s", e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Erreur de calcul : {str(e)}",
+            detail="Erreur lors du calcul de la commission. Vérifiez les données saisies.",
         )

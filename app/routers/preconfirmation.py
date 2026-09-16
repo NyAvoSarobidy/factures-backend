@@ -17,6 +17,8 @@ from typing import Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, status
 
+logger = logging.getLogger(__name__)
+
 from app.schemas.commission import DealInput
 from app.schemas.api_response import DealPublic
 from app.services.commission_service import calculate_commission_response
@@ -64,18 +66,20 @@ async def generate_preconfirmation(
         deal_data = json.loads(data)
         deal_input = DealInput(**deal_data)
     except (json.JSONDecodeError, Exception) as e:
+        logger.warning("Données invalides: %s", e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Données invalides : {str(e)}",
+            detail="Données invalides. Vérifiez le format du deal.",
         )
 
     try:
         calc_result = calculate_commission_response(deal_input)
         deal_public: DealPublic = calc_result.public
     except Exception as e:
+        logger.error("Erreur de calcul: %s", e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Erreur de calcul : {str(e)}",
+            detail="Erreur lors du calcul. Vérifiez les données saisies.",
         )
 
     logo_path = None

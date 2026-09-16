@@ -59,13 +59,19 @@ def calculate_fee_share(
 ) -> CommissionResult:
     """Commission = fraction des frais totaux du produit.
 
-    commission_value est une fraction decimale :
-      0.3333 = un tiers
-      0.40   = 40%
+    Utilise la fraction exacte (fraction_numerateur/denominateur) si disponible,
+    sinon la fraction décimale (commission_value).
     """
-    raw = term.commission_value * total_fees
+    fraction = term.get_fraction_value()
+    raw = fraction * total_fees
     amount = _round(raw)
-    percentage = term.commission_value * Decimal("100")
+    percentage = fraction * Decimal("100")
+    
+    if term.fraction_numerateur is not None and term.fraction_denominateur is not None:
+        fraction_str = f"{term.fraction_numerateur}/{term.fraction_denominateur}"
+    else:
+        fraction_str = f"{fraction}"
+    
     return CommissionResult(
         introducer_id=term.introducer_id,
         commission_type=term.commission_type,
@@ -73,7 +79,7 @@ def calculate_fee_share(
         commission_currency=term.commission_currency,
         calculated_amount=amount,
         calculation_detail=(
-            f"fee_share: {percentage}% de {total_fees} = {raw} -> {amount}"
+            f"fee_share: {fraction_str} ({percentage}%) de {total_fees} = {raw} -> {amount}"
         ),
     )
 

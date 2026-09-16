@@ -50,13 +50,21 @@ class CommissionTermInput(BaseModel):
         description="Type de commission : flat, fee_share, bps_notional",
     )
     commission_value: Decimal = Field(
-        ...,
+        Decimal("0"),
         description=(
             "Valeur du terme :\n"
             "- flat: montant (ex: 5000.00)\n"
-            "- fee_share: fraction decimale (ex: 0.3333 pour un tiers)\n"
+            "- fee_share: fraction decimale (ex: 0.3333 pour un tiers) — PRÉFÉREZ fraction_numerateur/denominateur pour les fractions exactes\n"
             "- bps_notional: nombre de points de base (ex: 50 pour 50 bps)"
         ),
+    )
+    fraction_numerateur: Optional[int] = Field(
+        None,
+        description="Numerateur de la fraction exacte (ex: 1 pour 1/3). Utilise avec fraction_denominateur.",
+    )
+    fraction_denominateur: Optional[int] = Field(
+        None,
+        description="Denominateur de la fraction exacte (ex: 3 pour 1/3). Utilise avec fraction_numerateur.",
     )
     commission_currency: str = Field(
         default="EUR",
@@ -68,9 +76,22 @@ class CommissionTermInput(BaseModel):
     @field_validator("commission_value")
     @classmethod
     def value_must_be_positive(cls, v: Decimal) -> Decimal:
-        if v <= 0:
-            raise ValueError("commission_value doit etre strictement positif")
+        if v < 0:
+            raise ValueError("commission_value doit etre positif ou nul")
         return v
+
+    @field_validator("fraction_denominateur")
+    @classmethod
+    def denominateur_must_be_positive(cls, v: Optional[int]) -> Optional[int]:
+        if v is not None and v <= 0:
+            raise ValueError("fraction_denominateur doit etre strictement positif")
+        return v
+
+    def get_fraction_value(self) -> Decimal:
+        """Retourne la valeur de la fraction, en privilegiant la fraction exacte si disponible."""
+        if self.fraction_numerateur is not None and self.fraction_denominateur is not None:
+            return Decimal(self.fraction_numerateur) / Decimal(self.fraction_denominateur)
+        return self.commission_value
 
 
 class ProductInput(BaseModel):

@@ -1,0 +1,99 @@
+PROJET FACTURES — POINTS A CORRIGER AVANT LIVRAISON
+=====================================================
+
+STATUT : CORRECTIONS APPLIQUEES
+Date : 2026-09-16
+
+---
+
+1. BUG CRITIQUE — Calcul commission "fee_share" (cas B) FAUX
+--------------------------------------------------------------
+Constat :
+  Cas B du brief : 1/3 des frais totaux sur 15 000 EUR de frais.
+  Résultat attendu : 15 000 / 3 = 5 000,00 EUR (exact)
+  Résultat actuel  : 4 999,50 EUR
+
+CORRIGE ✓
+  - Ajout de champs fraction_numerateur / fraction_denominateur dans CommissionTermInput
+  - Nouvelle méthode get_fraction_value() qui privilégie la fraction exacte si disponible
+  - Le moteur utilise la fraction exacte pour le calcul (1/3 = 5000.00€)
+  - Fallback : la fraction décimale reste supportée (0.3333 = 4999.50€)
+  - Tests ajoutés : test_case_b_fee_share_exact (5000.00€) ET test_case_b_fee_share_decimal (4999.50€)
+  - test_deal_multi_product mis à jour avec la fraction exacte (total = 23550.00€)
+
+
+2. A VERIFIER / A DOCUMENTER — Multi-introducteurs sur un même produit
+--------------------------------------------------------------------
+Constat :
+  Le brief dit : "Assume that list grows, and that a deal can involve
+  more than one introduer." Le schéma de données (introducers,
+  commission_terms) semble le permettre, mais aucun test ne le prouve.
+
+CORRIGE ✓
+  - Test ajouté : test_multi_introducers_same_product
+  - Vérifie 2 introducteurs sur un même produit avec types différents (bps + fee_share)
+  - Les deux commissions sont calculées indépendamment et correctement
+  - Le schéma ProductInput accepte déjà une liste de commission_terms (un par introducteur)
+
+
+3. A VERIFIER / A DOCUMENTER — Extensibilité réelle du moteur
+--------------------------------------------------------------------
+Constat :
+  Le brief dit "assume that list grows" pour les types de commission.
+  La doc dit "3 types supportés (extensibles)" sans préciser comment.
+
+DOCUMENTATION :
+  - Le moteur utilise un pattern dispatcher avec un dictionnaire CALCULATORS
+  - Ajouter un nouveau type = ajouter une fonction calculate_* et l'enregistrer dans CALCULATORS
+  - L'enum CommissionType est ouverte (nouvelles valeurs possibles sans casse)
+  - Coût d'ajout : ~10 lignes de code (1 fonction + 1 entrée dans le dict)
+  - L'architecture est pragmatique, pas over-engineered
+
+
+4. A VERIFIER — Confidentialité au-delà de l'API publique
+--------------------------------------------------------------------
+Constat :
+  Le brief dit : "That covers everything we hand over, not only what
+  is printed on the page." La doc couvre bien les schémas de réponse
+  API (DealPublic), mais rien n'indique si total_fees peut fuiter par
+  un autre biais.
+
+CORRIGE ✓
+  - Test ajouté : test_no_sensitive_data_in_public_fields
+  - Vérifie que total_fees, calculation_detail ne sont pas dans DealPublic/ProductPublic/CommissionTermPublic
+  - Tous les messages d'erreur utilisateur sont maintenant génériques (pas de détails internes)
+  - Les erreurs détaillées sont loguées côté serveur uniquement
+  - Les routers utilisent maintenant : logger.error(...) + message générique au client
+
+
+5. A DOCUMENTER — Ce qui a été volontairement laissé de côté
+--------------------------------------------------------------------
+DOCUMENTATION :
+
+  Le brief demande explicitement de documenter ce qui a été exclu,
+  pas seulement ce qui a été construit.
+
+  Hors scope (choix délibéré, pas oubli) :
+  - Facturation inverse (frais que l'entreprise reçoit) : non implémenté car hors scope du brief
+  - Comptabilité générale / cash-flow : non implémenté car hors scope du brief
+  - Flux de validation en ligne par la contrepartie : non implémenté (en attente feu vert réglementaire)
+
+  Limitation connue :
+  - Pas d'authentification utilisateur dans ce MVP
+  - Pas d'identifiant de génération dans les documents (qui a cliqué sur "Générer")
+  - C'est un choix conscience pour ce MVP (accès partagé, pas d'auth) — à ajouter en V2
+
+
+6. A CONSIDERER — Traçabilité de qui a généré le document
+--------------------------------------------------------------------
+DOCUMENTATION :
+
+  Le brief mentionne plusieurs personnes du middle-office travaillant
+  en parallèle sur la même période. Pas de mention d'un champ
+  identifiant qui a déclenché chaque génération.
+
+  Décision pour ce MVP :
+  - Pas d'authentification — accès partagé à l'outil
+  - Pas de "generated_by" renseigné automatiquement (le champ existe mais est null)
+  - C'est un choix conscient pour le MVP (pas d'auth, accès partagé à ce stade)
+  - À ajouter en V2 quand l'auth sera implémentée (_generated_by = user_id du connecté)

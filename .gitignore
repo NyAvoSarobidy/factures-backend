@@ -4,6 +4,8 @@ venv/
 
 # Secrets
 .env
+.compte-rendu-backend.md
+.Erreurs_corriger.txt
 
 # Python
 __pycache__/
