@@ -1,0 +1,21 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.9.2
+pydantic-settings==2.5.2
+python-dotenv==1.0.1
+
+# Supabase
+supabase==2.7.4
+
+# HTTP client async
+httpx==0.27.2
+
+# PDF generation (fpdf2 — pur Python, pas de deps système)
+fpdf2==2.8.8
+
+# Upload fichiers (form-data multipart)
+python-multipart==0.0.32
+
+# Testing
+pytest==8.3.3
+pytest-asyncio==0.23.8

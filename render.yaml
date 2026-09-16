@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: factures-backend
+    env: python
+    plan: free
+    rootPath: backend
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: APP_ENV
+        value: production
