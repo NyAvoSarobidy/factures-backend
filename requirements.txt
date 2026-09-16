@@ -13,6 +13,9 @@ httpx==0.27.2
 # PDF generation (fpdf2 — pur Python, pas de deps système)
 fpdf2==2.8.8
 
+# PDF extraction
+pymupdf==1.24.10
+
 # Upload fichiers (form-data multipart)
 python-multipart==0.0.32
 
