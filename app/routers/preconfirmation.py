@@ -13,7 +13,9 @@ import json
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Form, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, UploadFile, status
+
+from app.dependencies import verify_internal_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +141,10 @@ async def get_preconfirmation(doc_id: str):
     "/{doc_id}/detail",
     summary="Récupère le détail complet (avec snapshot confidentiel)",
 )
-async def get_preconfirmation_detail(doc_id: str):
+async def get_preconfirmation_detail(
+    doc_id: str,
+    _: None = Depends(verify_internal_api_key),
+):
     """Récupère le détail complet avec le snapshot (audit interne uniquement)."""
     doc = get_document_detail(doc_id)
     if not doc:
@@ -154,7 +159,11 @@ async def get_preconfirmation_detail(doc_id: str):
     "/",
     summary="Liste les documents générés (audit / historique)",
 )
-async def list_preconfirmations(deal_reference: Optional[str] = None, limit: int = 50):
+async def list_preconfirmations(
+    deal_reference: Optional[str] = None,
+    limit: int = 50,
+    _: None = Depends(verify_internal_api_key),
+):
     """Liste les documents avec un résumé audit (sans données confidentielles)."""
     return list_documents_summary(deal_reference=deal_reference, limit=limit)
 
@@ -164,7 +173,11 @@ async def list_preconfirmations(deal_reference: Optional[str] = None, limit: int
     summary="Liste les documents générés (audit / historique)",
     include_in_schema=False,
 )
-async def list_preconfirmations_no_slash(deal_reference: Optional[str] = None, limit: int = 50):
+async def list_preconfirmations_no_slash(
+    deal_reference: Optional[str] = None,
+    limit: int = 50,
+    _: None = Depends(verify_internal_api_key),
+):
     """Liste les documents — variante sans slash."""
     return list_documents_summary(deal_reference=deal_reference, limit=limit)
 
@@ -173,7 +186,11 @@ async def list_preconfirmations_no_slash(deal_reference: Optional[str] = None, l
     "/compare",
     summary="Compare deux versions d'un document",
 )
-async def compare_preconfirmations(doc_id_a: str = Query(...), doc_id_b: str = Query(...)):
+async def compare_preconfirmations(
+    doc_id_a: str = Query(...),
+    doc_id_b: str = Query(...),
+    _: None = Depends(verify_internal_api_key),
+):
     """Compare deux versions et retourne les différences."""
     result = compare_versions(doc_id_a, doc_id_b)
     if not result:

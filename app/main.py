@@ -23,14 +23,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Pour Render : le port vient de la variable d'environnement PORT
-PORT = int(os.environ.get("PORT", settings.app_port))
+PORT = int(os.environ.get("PORT", settings.APP_PORT))
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Démarrage : vérifier la connexion à Supabase."""
     logger.info("Démarrage du backend Factures...")
-    logger.info("Environnement : %s", settings.app_env)
+    logger.info("Environnement : %s", settings.APP_ENV)
 
     if db.health_check():
         logger.info("Connexion Supabase : OK")
@@ -85,7 +85,7 @@ app.include_router(extract_router.router)
 async def health():
     return {
         "status": "ok",
-        "environment": settings.app_env,
+        "environment": settings.APP_ENV,
         "database": "connected" if db.health_check() else "disconnected",
     }
 

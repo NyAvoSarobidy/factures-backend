@@ -15,15 +15,18 @@ class Settings(BaseSettings):
     supabase_anon_key: str = ""
 
     # App
-    app_env: str = "development"
-    app_port: int = 8000
+    APP_ENV: str = "development"
+    APP_PORT: int = 8000
+
+    # Clé API interne — protège les endpoints confidentiels
+    INTERNAL_API_KEY: str = ""
 
     # Hermes
-    hermes_api_key: str = ""
+    HERMES_API_KEY: str = ""
 
     @property
     def is_production(self) -> bool:
-        return self.app_env.lower() == "production"
+        return self.APP_ENV.lower() == "production"
 
 
 settings = Settings()
