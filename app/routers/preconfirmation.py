@@ -11,11 +11,9 @@ Endpoints :
 
 import json
 import logging
-import os
-import tempfile
 from typing import Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Form, HTTPException, Query, UploadFile, status
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +27,6 @@ from app.services.storage_service import (
     get_document_detail,
     compare_versions,
 )
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/preconfirmation",
@@ -50,7 +46,6 @@ audit_router = APIRouter(
 )
 async def generate_preconfirmation(
     data: str = Form(...),
-    logo: Optional[UploadFile] = File(None),
     counterparty_name: Optional[str] = Form(None),
     counterparty_address: Optional[str] = Form(None),
 ):
@@ -58,7 +53,6 @@ async def generate_preconfirmation(
 
     Paramètres (multipart/form-data):
     - data : données du deal en JSON (string)
-    - logo : fichier image optionnel (PNG/JPG)
     - counterparty_name : nom de la contrepartie (optionnel)
     - counterparty_address : adresse de la contrepartie (optionnel)
     """
@@ -82,19 +76,10 @@ async def generate_preconfirmation(
             detail="Erreur lors du calcul. Vérifiez les données saisies.",
         )
 
-    logo_path = None
-    if logo and logo.filename:
-        suffix = os.path.splitext(logo.filename)[1]
-        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-            content = await logo.read()
-            tmp.write(content)
-            logo_path = tmp.name
-        logger.info("Logo reçu : %s", logo.filename)
-
     try:
         pdf_bytes = generate_preconfirmation_pdf(
             deal_public,
-            logo_path=logo_path,
+            logo_path=None,
             counterparty_name=counterparty_name,
             counterparty_address=counterparty_address,
         )
@@ -104,12 +89,6 @@ async def generate_preconfirmation(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erreur lors de la génération du PDF : {str(e)}",
         )
-    finally:
-        if logo_path:
-            try:
-                os.unlink(logo_path)
-            except Exception:
-                pass
 
     try:
         doc_record = store_pdf(pdf_bytes, deal_public, calc_result.snapshot)
