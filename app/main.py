@@ -55,13 +55,20 @@ app = FastAPI(
 )
 
 # CORS
+origins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://factures-frontend.vercel.app"
+]
+
+# En prod, autoriser le domaine Vercel exact
+frontend_url = os.environ.get("FRONTEND_URL")
+if frontend_url:
+    origins.append(frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "https://*.vercel.app",
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
